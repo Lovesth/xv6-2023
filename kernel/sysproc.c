@@ -93,7 +93,14 @@ sys_uptime(void)
 }
 
 // print out some information when system call is about to return
+// call trace(int mask) in user space before tracing the corresponding system call
 uint64
 sys_trace(void){
-  
+  int n;
+  argint(0, &n);
+
+  struct proc *p = myproc();
+  // the mask will be stored in proc->trace_num
+  p->trace_num = n;
+  return 0;
 }
