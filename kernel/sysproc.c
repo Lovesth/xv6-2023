@@ -91,3 +91,9 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// print out some information when system call is about to return
+uint64
+sys_trace(void){
+  
+}
