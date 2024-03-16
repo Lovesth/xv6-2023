@@ -689,3 +689,17 @@ procdump(void)
     printf("\n");
   }
 }
+
+// calculate the number of unused proc 
+uint64 getUnusedProcNum(void){
+  struct proc *p;
+  uint64 sum = 0;
+  for(p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if(p->state != UNUSED) {
+      sum++;
+    } 
+    release(&p->lock);
+  }
+  return sum;
+}
