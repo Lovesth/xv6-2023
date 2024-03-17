@@ -75,6 +75,31 @@ int
 sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+  uint64 arg1;
+  int arg2;
+  uint64 arg3;
+
+  argaddr(0, &arg1);
+  argint(1, &arg2);
+  argaddr(2, &arg3);
+
+  // unsigned int abits = *(unsigned int*)arg3;
+  unsigned int abits = 0;
+  struct proc* cProc = myproc();
+  pagetable_t pagetable = cProc->pagetable;
+  // vmprint(cProc->pagetable);
+  for(int i=0; i<arg2; i++, arg1+=PGSIZE){
+    pte_t* tmp = walk(pagetable, arg1, 0);
+    // printf("%d: pte %p pa %p\n", i, *tmp, PTE2PA(*tmp));
+    if((*tmp & PTE_A) && (*tmp & PTE_D)){
+      // printf("%d-- -- --: pte %p pa %p\n", i, *tmp, PTE2PA(*tmp));
+      abits |= ((uint)1 << i);
+    }
+  }
+  abits = abits - 1;
+  pte_t* tmp = walk(pagetable, arg3, 0);
+  uint64 pAddr = PTE2PA(*tmp) + (arg3 - PGROUNDDOWN(arg3));
+  memmove((void *)pAddr, &abits, sizeof(abits));
   return 0;
 }
 #endif

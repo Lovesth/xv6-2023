@@ -282,6 +282,8 @@ growproc(int n)
   struct proc *p = myproc();
 
   sz = p->sz;
+  // //-------------------------
+  // vmprint(p->pagetable);
   if(n > 0){
     if((sz = uvmalloc(p->pagetable, sz, sz + n, PTE_W)) == 0) {
       return -1;
@@ -289,6 +291,8 @@ growproc(int n)
   } else if(n < 0){
     sz = uvmdealloc(p->pagetable, sz, sz + n);
   }
+  // vmprint(p->pagetable);
+  // //-------------------------
   p->sz = sz;
   return 0;
 }
