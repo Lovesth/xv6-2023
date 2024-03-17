@@ -133,3 +133,27 @@ printfinit(void)
   initlock(&pr.lock, "pr");
   pr.locking = 1;
 }
+
+void vmprint(pagetable_t pagetable){
+  printf("page table %p\n", pagetable);
+  for(int i=0; i<512; i++){
+    pte_t p2 = pagetable[i];
+    if(p2 & PTE_V){
+      printf("..%d: pte %p pa %p\n", i, p2, PTE2PA(p2));
+      pagetable_t pgtbl1 = (pagetable_t)PTE2PA(p2);
+      for(int j=0; j<512; j++){
+        pte_t p1 = pgtbl1[j];
+        if(p1 & PTE_V){
+          printf(".. ..%d: pte %p pa %p\n", j, p1, PTE2PA(p1));
+          pagetable_t pgtbl0 = (pagetable_t)PTE2PA(p1);
+          for(int k=0; k<512; k++){
+            pte_t p0 = pgtbl0[k];
+            if(p0 & PTE_V){
+              printf(".. .. ..%d: pte %p pa %p\n", k, p0, PTE2PA(p0));
+            }
+          }
+        }
+      }
+    }
+  }
+}
