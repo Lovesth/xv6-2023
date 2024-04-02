@@ -140,8 +140,9 @@ void backtrace(void){
   uint64 lBound = PGROUNDDOWN(fp);
 
   while (fp >= lBound && fp <uBound) {
-    printf("%p\n", fp);
-    fp -= 16;
+    fp -= 8;
+    printf("%p\n", *((uint64*)fp));
+    fp -= 8;
     fp = *((uint64*)fp);
   }
 
