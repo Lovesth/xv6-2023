@@ -23,7 +23,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
-int sigalarm(int nTics, void(*periodic)(void));
+int sigalarm(int ticks, void (*handler)());
 int sigreturn(void);
 
 // ulib.c
