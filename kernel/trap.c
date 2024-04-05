@@ -63,7 +63,6 @@ usertrap(void)
     // an interrupt will change sepc, scause, and sstatus,
     // so enable only now that we're done with those registers.
     intr_on();
-
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
@@ -79,14 +78,13 @@ usertrap(void)
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2){
     yield();
-    if(p->handler){
-      if(++(p->currentTicks) >= p->ticks){
-        p->currentTicks = 0;
+    if(p->ticks && ++(p->currentTicks) >= p->ticks && !p->alarming){
+        // p->retAddr = p->trapframe->epc;
         p->trapframe->epc = p->handler;
+        p->alarming = 1;
+        p->currentTicks -= p->ticks;
       }
     }
-  }
-    
 
   usertrapret();
 }

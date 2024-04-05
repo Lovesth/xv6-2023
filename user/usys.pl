@@ -39,4 +39,4 @@ entry("uptime");
 
 entry("sigalarm");
 entry("sigreturn");
-
+entry("checkUserSpaceRegs");

@@ -108,4 +108,6 @@ struct proc {
   int ticks;
   uint64 handler;
   int currentTicks;
+  int alarming;
+  uint64 retAddr;
 };

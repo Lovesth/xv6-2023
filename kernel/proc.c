@@ -150,6 +150,7 @@ found:
   p->ticks = 0;
   p->currentTicks = 0;
   p->handler = 0;
+  p->alarming = 0;
   //-------------------------------------
   return p;
 }

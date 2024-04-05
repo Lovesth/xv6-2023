@@ -23,9 +23,9 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
-int sigalarm(int ticks, int test);
-// int sigalarm(int ticks, void (*handler)());
+int sigalarm(int ticks, void (*handler)());
 int sigreturn(void);
+int checkUserSpaceRegs(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

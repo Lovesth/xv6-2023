@@ -94,21 +94,26 @@ sys_uptime(void)
 }
 
 uint64 sys_sigalarm(void){
-  int test1, test2;
-  argint(0, &test1);
-  argint(1, &test2);
-  // int ticks_;
-  // uint64 handler_;
-  // argint(0, &ticks_);
-  // argaddr(1, &handler_);
-  // struct proc* p = myproc();
-  // p->ticks = ticks_;
-  // p->handler = handler_;
+  int ticks_;
+  uint64 handler_;
+  argint(0, &ticks_);
+  argaddr(1, &handler_);
+  struct proc* p = myproc();
+  p->ticks = ticks_;
+  p->handler = handler_;
   return 0;
 }
 
 uint64 sys_sigreturn(void){
+  struct proc* p = myproc();
+  p->alarming = 0;
+  // p->trapframe->epc = p->retAddr;
   return 0;
+}
+
+uint64 sys_checkUserSpaceRegs(void){
+  struct proc* p = myproc();
+  return p->alarming;
 }
 
 
