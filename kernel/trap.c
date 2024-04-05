@@ -79,10 +79,17 @@ usertrap(void)
   if(which_dev == 2){
     yield();
     if(p->ticks && ++(p->currentTicks) >= p->ticks && !p->alarming){
-        // p->retAddr = p->trapframe->epc;
+        intr_off();
+        p->trapframe->ra = p->trapframe->epc;
         p->trapframe->epc = p->handler;
         p->alarming = 1;
         p->currentTicks -= p->ticks;
+
+        for(int i=0; i<27; i++){
+          if(i == 3 || i == 4)
+            continue;
+          *((uint64*)(p->trapframe)+36+i) = *((uint64*)(p->trapframe)+9+i);
+        }
       }
     }
 
