@@ -106,14 +106,13 @@ uint64 sys_sigalarm(void){
 
 uint64 sys_sigreturn(void){
   struct proc* p = myproc();
-  for(int i=0; i<27; i++){
-    if(i == 3 || i == 4)
-      continue;
-    *((uint64*)(p->trapframe)+9+i) = *((uint64*)(p->trapframe)+36+i);
+  if(p->alarming){
+    for(int i=0; i<36; i++){
+    *((uint64*)(p->trapframe)+i) = *((uint64*)(p->trapframe)+36+i);
   }
   p->alarming = 0;
-  intr_on();
-  return 0;
+  }
+  return p->trapframe->a0;
 }
 
 uint64 sys_checkUserSpaceRegs(void){
