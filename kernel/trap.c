@@ -68,10 +68,11 @@ usertrap(void)
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
-    uint64 va = r_sepc();
+    // which address ?
+    uint64 va = r_stval();
     pte_t* pte = walk(p->pagetable, va, 0);
     if(*pte & PTE_COW){
-      printf("sepc: %p\n", va);
+      // printf("cow pte: %p\n", va);
       cow(va);
     }else{
       printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
