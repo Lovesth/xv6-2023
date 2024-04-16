@@ -183,9 +183,7 @@ int
 fork1(void)
 {
   int pid;
-  printf("before fork!\n");
   pid = fork();
-  printf("after fork!\n");
   if(pid == -1)
     panic("fork");
   return pid;

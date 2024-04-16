@@ -687,27 +687,27 @@ procdump(void)
   }
 }
 
-void cow(uint64 va){
+int cow(uint64 va){
   struct proc* p;
   p = myproc();
-
+  
   pte_t* pte = walk(p->pagetable, va, 0);
-  if(*pte & PTE_COW){
-      // cow
-      uint64 pa;
-      char* mem;
-      uint flags;
-      pa = PTE2PA(*pte);
-      flags = PTE_FLAGS(*pte);
-      if((mem = kalloc()) == 0)
-        exit(-1);
-      memmove(mem, (char*)pa, PGSIZE);
-      // set new flags
-      flags |= PTE_W;
-      flags ^= PTE_COW;
-      if(mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags) != 0)
-        exit(-1);
-      // kfree the cow page
-      kfree((void*)pa);
-    }
+  
+  // cow
+  uint64 pa;
+  char* mem;
+  uint flags;
+  pa = PTE2PA(*pte);
+  flags = PTE_FLAGS(*pte);
+  if((mem = kalloc()) == 0)
+    exit(-1);
+  memmove(mem, (char*)pa, PGSIZE);
+  // set new flags
+  flags |= PTE_W;
+  flags ^= PTE_COW;
+  if(mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags) != 0)
+    exit(-1);
+  // kfree the cow page
+  kfree((void*)pa);
+  return 0;
 }

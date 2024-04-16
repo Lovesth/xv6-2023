@@ -85,8 +85,11 @@ kvminithart()
 pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc)
 {
-  if(va >= MAXVA)
-    panic("walk");
+  if(va >= MAXVA){
+    exit(-1);
+    // panic("walk");
+  }
+    
 
   for(int level = 2; level > 0; level--) {
     pte_t *pte = &pagetable[PX(level, va)];
@@ -394,8 +397,11 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
     if(va0 >= MAXVA)
       return -1;
     pte = walk(pagetable, va0, 0);
-    if(pte == 0 || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0 || (*pte & PTE_W) == 0){
-      if((*pte & PTE_W) == 0 && (*pte & PTE_COW)){
+    if(pte == 0)
+      return -1;
+    if((*pte & PTE_V) == 0 || (*pte & PTE_U) == 0 || (*pte & PTE_W) == 0){
+      // text page shouldn't be cowed
+      if((*pte & PTE_X)==0 && (*pte & PTE_COW)){
         cow(dstva);
       }else{
         return -1;
