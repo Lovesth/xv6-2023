@@ -65,10 +65,7 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
-    // ok
-  } else {
-    // which address ?
+  } else if(r_scause() == 15){
     uint64 va = r_stval();
     pte_t* pte = walk(p->pagetable, va, 0);
     if(pte == 0 || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0 || (*pte & PTE_X) || (*pte & PTE_COW)==0){
@@ -78,6 +75,12 @@ usertrap(void)
     }else{
       cow(va);
     }
+  } else if((which_dev = devintr()) != 0){
+    // ok
+  } else {
+    printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
+    printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
+    setkilled(p);
   }
 
   if(killed(p))
