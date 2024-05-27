@@ -70,7 +70,9 @@ balloc(uint dev)
 
   bp = 0;
   for(b = 0; b < sb.size; b += BPB){
+    // bp: the bitmap block
     bp = bread(dev, BBLOCK(b, sb));
+    // each block has 8*BSIZE bits
     for(bi = 0; bi < BPB && b + bi < sb.size; bi++){
       m = 1 << (bi % 8);
       if((bp->data[bi/8] & m) == 0){  // Is block free?
@@ -222,6 +224,7 @@ ialloc(uint dev, short type)
 // Must be called after every change to an ip->xxx field
 // that lives on disk.
 // Caller must hold ip->lock.
+// undate the block which hold the inode.
 void
 iupdate(struct inode *ip)
 {
@@ -523,6 +526,7 @@ writei(struct inode *ip, int user_src, uint64 src, uint off, uint n)
       brelse(bp);
       break;
     }
+    // update inode's content(it's addrs blocks)
     log_write(bp);
     brelse(bp);
   }
