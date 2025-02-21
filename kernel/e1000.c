@@ -104,13 +104,13 @@ e1000_transmit(struct mbuf *m)
   //
   acquire(&e1000_lock);
   int tailIdx = regs[E1000_TDT];
-  int headIdx = regs[E1000_TDH];
   // Tx_Ring is full
-  if ((tailIdx + 1) % TX_RING_SIZE == headIdx)
-    return -1;
+  while ((tailIdx + 1) % TX_RING_SIZE == regs[E1000_TDH]);
   // DD flag is zero
-  if ((tx_ring[tailIdx].status & 1) == 0)
+  if ((tx_ring[tailIdx].status & 1) == 0){
+    release(&e1000_lock);
     return -1;
+  }
   // mbuffree
   if (tx_mbufs[tailIdx]){
     mbuffree(tx_mbufs[tailIdx]);
@@ -143,21 +143,30 @@ e1000_recv(void)
   // Create and deliver an mbuf for each packet (using net_rx()).
   //
   acquire(&e1000_lock);
-  int tailIdx = regs[E1000_RDT];
-  // DD is not set
-  if ((rx_ring[tailIdx].status & 1) == 0)
-    return;
-  rx_mbufs[tailIdx]->len = rx_ring[tailIdx].length;
-  net_rx(rx_mbufs[tailIdx]);
-  //
-  memset((void *)&rx_mbufs[tailIdx], 0, sizeof(rx_mbufs[tailIdx]));
-  // allocate a new mbuf
-  rx_mbufs[tailIdx] = mbufalloc(0);
-  if (!rx_mbufs[tailIdx])
-    panic("e1000");
-  rx_ring[tailIdx].addr = (uint64)rx_mbufs[tailIdx]->head;
-  //
-  regs[E1000_RDT] = (regs[E1000_RDT] + 1) % RX_RING_SIZE;
+  while ((regs[E1000_RDT] + 1) % RX_RING_SIZE != regs[E1000_RDH])
+  {
+    int tailIdx = (regs[E1000_RDT] + 1) % RX_RING_SIZE;
+    // DD is not set
+    if ((rx_ring[tailIdx].status & 1) == 0)
+    {
+      release(&e1000_lock);
+      return;
+    }
+    rx_mbufs[tailIdx]->len = rx_ring[tailIdx].length;
+    struct mbuf *m = rx_mbufs[tailIdx];
+    //
+    memset((void *)&rx_ring[tailIdx], 0, sizeof(rx_ring[tailIdx]));
+    // allocate a new mbuf
+    rx_mbufs[tailIdx] = mbufalloc(0);
+    if (!rx_mbufs[tailIdx])
+      panic("e1000");
+    rx_ring[tailIdx].addr = (uint64)rx_mbufs[tailIdx]->head;
+    //
+    regs[E1000_RDT] = tailIdx;
+    release(&e1000_lock);
+    net_rx(m);
+    acquire(&e1000_lock);
+  }
   release(&e1000_lock);
 }
 
