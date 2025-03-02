@@ -503,3 +503,49 @@ sys_pipe(void)
   }
   return 0;
 }
+
+uint64 sys_symlink(void){
+  char name[MAXPATH], target[MAXPATH], path[MAXPATH];
+  if(argstr(0, target, MAXPATH) < 0)
+    return -1;
+  if(argstr(1, path, MAXPATH) < 0)
+    return -1;
+
+  struct inode *dp, *ip;
+  if((dp = nameiparent(path, name)) == 0){
+    return -1;
+  }
+  ilock(dp);
+  if((ip == dirlookup(dp, name, 0)) != 0){
+    iput(ip);
+    iunlock(dp);
+    return -1;
+  }
+  int off = 0;
+  struct dirent de;
+  for(off=0; off<dp->size; off+=sizeof(de)){
+    if(readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+      panic("symlink read");
+    if(de.inum == 0)
+      break;
+  }
+  ip = ialloc(ROOTDEV, T_SYMLINK);
+  ilock(ip);
+  // write target to ip
+  if(writei(ip, 0, target, 0, MAXPATH) != MAXPATH){
+    iunlock(ip);
+    iunlock(dp);
+    return -1;
+  }
+
+  strncpy(de.name, name, DIRSIZ);
+  de.inum = ip->inum;
+  if(writei(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de)){
+    iunlock(ip);
+    iunlock(dp);
+    return -1;
+  }
+  iunlock(ip);
+  iunlock(dp);
+  return 0;
+}

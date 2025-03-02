@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.ipp": "cpp",
+        "defs.h": "c",
+        "syscall.h": "c",
+        "atomic": "cpp",
+        "*.tcc": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp",
+        "ostream": "cpp"
+    }
+}
