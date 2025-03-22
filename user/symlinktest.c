@@ -44,7 +44,9 @@ cleanup(void)
 static int
 stat_slink(char *pn, struct stat *st)
 {
+  printf("before open in stat_slink\n");
   int fd = open(pn, O_RDONLY | O_NOFOLLOW);
+  printf("after open in stat_slink\n");
   if(fd < 0)
     return -1;
   if(fstat(fd, st) != 0)
@@ -64,37 +66,62 @@ testsymlink(void)
 
   mkdir("/testsymlink");
 
+  printf("after mkdir\n");
   fd1 = open("/testsymlink/a", O_CREATE | O_RDWR);
   if(fd1 < 0) fail("failed to open a");
 
+  printf("before symlink\n");
   r = symlink("/testsymlink/a", "/testsymlink/b");
+  printf("after symlink\n");
+
   if(r < 0)
     fail("symlink b -> a failed");
 
+  printf("before write fd1\n");
   if(write(fd1, buf, sizeof(buf)) != 4)
     fail("failed to write to a");
+  printf("after write fd1\n");
 
+  printf("before stat_slink\n");
   if (stat_slink("/testsymlink/b", &st) != 0)
     fail("failed to stat b");
+  printf("after stat_slink\n");
+  
   if(st.type != T_SYMLINK)
     fail("b isn't a symlink");
 
+  printf("before open /testsymlink/b\n");
   fd2 = open("/testsymlink/b", O_RDWR);
+  printf("after open /testsymlink/b\n");
+  
   if(fd2 < 0)
     fail("failed to open b");
+
+  printf("before read(fd2, &c, 1)\n");
   read(fd2, &c, 1);
   if (c != 'a')
     fail("failed to read bytes from b");
+  printf("after read(fd2, &c, 1)\n");
 
+  printf("before unlink(/testsymlink/a)\n");
   unlink("/testsymlink/a");
+  printf("after unlink(/testsymlink/a)\n");
+
+  printf("before open(/testsymlink/b, O_RDWR)\n");
   if(open("/testsymlink/b", O_RDWR) >= 0)
     fail("Should not be able to open b after deleting a");
+  printf("after open(/testsymlink/b, O_RDWR)\n");
 
+  printf("before symlink(/testsymlink/b, /testsymlink/a)\n");
   r = symlink("/testsymlink/b", "/testsymlink/a");
+  printf("after symlink(/testsymlink/b, /testsymlink/a)\n");
+
   if(r < 0)
     fail("symlink a -> b failed");
 
+  printf("before open(/testsymlink/b, O_RDWR\n");
   r = open("/testsymlink/b", O_RDWR);
+  printf("after open(/testsymlink/b, O_RDWR\n");
   if(r >= 0)
     fail("Should not be able to open b (cycle b->a->b->..)\n");
   

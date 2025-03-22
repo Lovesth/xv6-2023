@@ -335,6 +335,31 @@ sys_open(void)
     }
   }
 
+  int cnt = 0;
+  // mycode
+  if(ip->type == T_SYMLINK && !(omode & O_NOFOLLOW)){
+    char name[MAXPATH];
+    while(ip->type == T_SYMLINK){
+      if(readi(ip, 0, ((uint64)(void*)name), 0, MAXPATH) != MAXPATH){
+        iunlockput(ip);
+        end_op();
+        return -1;
+      }
+      iunlockput(ip);
+      if((ip = namei(name)) == 0){
+        end_op();
+        return -1;
+      }
+      ilock(ip);
+      cnt++;
+      if(cnt > 10){
+        iunlockput(ip);
+        end_op();
+        return -1;
+      }
+    }
+  }
+
   if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)){
     iunlockput(ip);
     end_op();
@@ -512,40 +537,44 @@ uint64 sys_symlink(void){
     return -1;
 
   struct inode *dp, *ip;
+  begin_op();
   if((dp = nameiparent(path, name)) == 0){
+    // iput(dp);
+    end_op();
     return -1;
   }
   ilock(dp);
-  if((ip == dirlookup(dp, name, 0)) != 0){
+
+  if((ip = dirlookup(dp, name, 0)) != 0){
     iput(ip);
-    iunlock(dp);
+    iunlockput(dp);
+    end_op();
     return -1;
   }
-  int off = 0;
-  struct dirent de;
-  for(off=0; off<dp->size; off+=sizeof(de)){
-    if(readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
-      panic("symlink read");
-    if(de.inum == 0)
-      break;
-  }
+  
   ip = ialloc(ROOTDEV, T_SYMLINK);
   ilock(ip);
+  ip->nlink++;
+  iupdate(ip);
   // write target to ip
-  if(writei(ip, 0, target, 0, MAXPATH) != MAXPATH){
-    iunlock(ip);
-    iunlock(dp);
+  if(writei(ip, 0, ((uint64)(void*)target), 0, MAXPATH) != MAXPATH){
+    iunlockput(ip);
+    iunlockput(dp);
+    end_op();
     return -1;
   }
 
+  struct dirent de;
   strncpy(de.name, name, DIRSIZ);
   de.inum = ip->inum;
-  if(writei(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de)){
-    iunlock(ip);
-    iunlock(dp);
+  if(writei(dp, 0, (uint64)&de, dp->size, sizeof(de)) != sizeof(de)){
+    iunlockput(ip);
+    iunlockput(dp);
+    end_op();
     return -1;
   }
-  iunlock(ip);
-  iunlock(dp);
+  iunlockput(ip);
+  iunlockput(dp);
+  end_op();
   return 0;
 }
